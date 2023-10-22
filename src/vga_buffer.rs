@@ -1,3 +1,8 @@
+use core::fmt;
+use lazy_static::lazy_static;
+use spin::Mutex;
+use volatile::Volatile;
+
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -39,8 +44,6 @@ struct ScreenChar {
 
 const BUFFER_HEIGHT: usize = 25;
 const BUFFER_WIDTH: usize = 80;
-
-use volatile::Volatile;
 
 #[repr(transparent)]
 struct Buffer {
@@ -106,8 +109,6 @@ impl Writer {
     }
 }
 
-use core::fmt;
-
 impl fmt::Write for Writer {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         self.write_string(s);
@@ -115,21 +116,26 @@ impl fmt::Write for Writer {
     }
 }
 
-pub fn print_test() {
-    use core::fmt::Write;
-    let mut writer = Writer {
+lazy_static! {
+    pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column_position: 0,
         color_code: ColorCode::new(Color::White, Color::Black),
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
-    };
+    });
+}
 
-    writer.write_byte(b'H');
-    writer.write_string("ello, ");
-    write!(writer, "\n\n").unwrap();
-    write!(
-        writer,
-        "möön{}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "hx"
-    )
-    .unwrap();
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => ($crate::vga_buffer::_print(format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! println {
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+}
+
+#[doc(hidden)]
+pub fn _print(args: fmt::Arguments) {
+    use core::fmt::Write;
+    WRITER.lock().write_fmt(args).unwrap();
 }
