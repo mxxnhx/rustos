@@ -84,7 +84,26 @@ impl Writer {
         }
     }
 
-    fn new_line(&mut self) {}
+    fn new_line(&mut self) {
+        for row in 0..BUFFER_HEIGHT - 1 {
+            for col in 0..BUFFER_WIDTH {
+                self.buffer.chars[row][col].write(self.buffer.chars[row + 1][col].read())
+            }
+        }
+
+        self.clear_row(BUFFER_HEIGHT - 1);
+        self.column_position = 0;
+    }
+
+    fn clear_row(&mut self, row: usize) {
+        let blank = ScreenChar {
+            ascii_character: b' ',
+            color_code: self.color_code,
+        };
+        for col in 0..BUFFER_WIDTH {
+            self.buffer.chars[row][col].write(blank);
+        }
+    }
 }
 
 use core::fmt;
@@ -106,5 +125,11 @@ pub fn print_test() {
 
     writer.write_byte(b'H');
     writer.write_string("ello, ");
-    write!(writer, "möön{}", "hx").unwrap();
+    write!(writer, "\n\n").unwrap();
+    write!(
+        writer,
+        "möön{}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "hx"
+    )
+    .unwrap();
 }
