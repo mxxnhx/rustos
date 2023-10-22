@@ -1,3 +1,3 @@
-fn main() {
-    println!("Hello mxxnhx");
-}
+#![no_std]
+
+fn main() {}
