@@ -4,6 +4,7 @@
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
+mod serial;
 mod vga_buffer;
 use core::panic::PanicInfo;
 
@@ -28,7 +29,7 @@ pub extern "C" fn _start() -> ! {
 
 #[cfg(test)]
 fn test_runner(tests: &[&dyn Fn()]) {
-    println!("Running {} tests", tests.len());
+    serial_println!("Running {} tests", tests.len());
     for test in tests {
         test();
     }
